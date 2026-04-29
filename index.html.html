@@ -1,0 +1,134 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LoL Matchup Analyzer V5</title><style>
+body{margin:0;background:#010a13;color:#c8aa6e;font-family:system-ui,Segoe UI,sans-serif}.app{max-width:1150px;margin:auto;padding:28px 16px}h1{text-align:center;color:#c89b3c}.head,.status{text-align:center;color:#777;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:850px){.grid{grid-template-columns:1fr}}.wide{grid-column:1/-1}.panel,.result{background:#071323;border:1px solid #1e3a5f;border-radius:14px;padding:16px}.title{color:#c89b3c;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.sub{font-size:11px;color:#777;text-transform:uppercase;margin:12px 0 6px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#030b15;border:1px solid #1e3a5f;color:#aaa;border-radius:99px;padding:6px 10px;cursor:pointer}.chip.active{border-color:#c89b3c;color:#f0e6d3}input,select,textarea{width:100%;background:#030b15;border:1px solid #1e3a5f;color:#f0e6d3;border-radius:10px;padding:10px;font:inherit}.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{grid-column:1/-1;border:0;border-radius:12px;background:linear-gradient(135deg,#785a28,#c89b3c,#f0e6d3);color:#010a13;font-weight:900;padding:14px;cursor:pointer}.card{background:#030b15;border:1px solid #1e3a5f;border-radius:12px;padding:12px;line-height:1.45;font-size:13px}.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:760px){.cards{grid-template-columns:1fr}.slots{grid-template-columns:1fr}}b{color:#f0e6d3}.warn{border-color:#d76666;color:#edaaaa}.ok{border-color:#40b878}.vio{border-color:#b48cff}.blue{border-color:#0bc4e3}.sec{margin-top:16px}.sec h3{color:#9b742f;font-size:12px;text-transform:uppercase;letter-spacing:.1em}.order{display:flex;flex-direction:column;gap:7px}.item{display:grid;grid-template-columns:34px 1fr;gap:10px;background:#030b15;border:1px solid #1e3a5f;border-radius:12px;padding:10px}.num{border:1px solid #c89b3c;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;color:#f0e6d3}small{color:#777}.tag{display:inline-block;border:1px solid #c89b3c66;border-radius:99px;padding:2px 7px;font-size:10px;margin:0 5px 5px 0;color:#c89b3c}.empty{grid-column:1/-1;border:1px dashed #1e3a5f;border-radius:14px;padding:32px;text-align:center;color:#777}
+.avatar{width:34px;height:34px;border-radius:50%;border:2px solid #c89b3c;object-fit:cover;background:#030b15;vertical-align:middle}
+.heroLine{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.heroLine .avatar{width:54px;height:54px}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #1e3a5f;background:#030b15;border-radius:999px;padding:5px 9px;color:#f0e6d3;font-size:12px}
+.pill .avatar{width:28px;height:28px;border-width:1px}
+
+.itemIcon,.runeIcon{width:34px;height:34px;border-radius:8px;border:1px solid #c89b3c66;object-fit:cover;background:#030b15;flex:0 0 auto}
+.runeIcon{border-radius:50%}
+.runeBox{display:flex;align-items:center;gap:8px;margin:5px 0;flex-wrap:wrap}
+.runeMini{display:inline-flex;align-items:center;gap:6px;border:1px solid #1e3a5f;background:#071323;border-radius:999px;padding:4px 8px;margin:3px 5px 3px 0;color:#f0e6d3;font-size:12px}
+.runeMini .runeIcon{width:24px;height:24px}
+.item{grid-template-columns:34px 42px 1fr!important;align-items:center}
+</style></head><body><div class="app"><h1>LoL Matchup Analyzer</h1><div class="head">V5 · Campeones oficiales desde Riot Data Dragon · Runas primero por campeón, después por matchup · Items concretos</div><div id="status" class="status">Cargando campeones oficiales...</div><div class="grid"><section class="panel"><div class="title">Tu campeón</div><div id="roles" class="chips"></div><div class="sub">Campeón</div><input id="me" list="champions" placeholder="Ej: Caitlyn, Thresh, Master Yi"><div class="sub">Plan</div><select id="style"><option value="auto">Auto / recomendado</option><option value="safe">Safe lane / escalar</option><option value="poke">Poke</option><option value="burst">Burst / all-in</option><option value="dps">DPS prolongado</option><option value="roam">Roam</option></select></section><section class="panel"><div class="title">Enemigos</div><div class="sub">Rival directo</div><input id="lane" list="champions"><div class="sub">Resto</div><div class="slots"><input id="e1" list="champions"><input id="e2" list="champions"><input id="e3" list="champions"><input id="e4" list="champions"></div></section><section class="panel wide"><div class="title">Aliados</div><div class="slots"><input id="a1" list="champions"><input id="a2" list="champions"><input id="a3" list="champions"><input id="a4" list="champions"></div></section><button class="btn" onclick="analyze()">Analizar</button><div id="out" class="empty">Cargá campeones y analizá. Si Caitlyn sale con Cometa, rompí algo.</div></div><datalist id="champions"></datalist></div><script>
+let role='Bot',C={},names=[],dataOK=false,DDV='',ITEMS={},RUNES={},TREES={};['Top','Jungle','Mid','Bot','Support'].forEach(r=>roles.innerHTML+=`<button class="chip ${r==role?'active':''}" onclick="role='${r}';document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));this.classList.add('active')">${r}</button>`);
+const profiles={
+Caitlyn:{kind:'marksman',dmg:'AD',r:{p:'Precisión',k:'Cadencia letal / Lethal Tempo',rows:'Claridad mental · Leyenda: Linaje · Golpe de gracia',s:'Brujería',sr:'Concentración absoluta · Tormenta creciente',why:'Base real de Caitlyn ADC. Cometa solo sería build niche, no default.'},it:[['Espada de Doran','Inicio seguro para lane.'],['Hexóptica C44 / Hexoptics C44','Primer core actual de Caitlyn.'],['Grebas de berserker / Berserker’s Greaves','Velocidad de ataque.'],['Filo del infinito / Infinity Edge','Daño crítico principal.'],['Cañón de fuego rápido / Rapid Firecannon','Rango y poke seguro.'],['Recuerdos de Lord Dominik / Lord Dominik’s Regards','Penetración vs armadura/vida.'],['Sanguinaria / Bloodthirster','Sustain y cierre.']]},
+Thresh:{kind:'tank',dmg:'Mixed',r:{p:'Valor',k:'Aftershock / Reverberacción',rows:'Fuente de vida · Revestimiento de huesos · Inquebrantable',s:'Inspiración',sr:'Destello hextech · Perspicacia cósmica',why:'Thresh no quiere runa de daño; quiere sobrevivir al engage y castigar picks.'},it:[['Atlas mundial / World Atlas','Item de support.'],['Botas de movilidad o Jonias','Roam o más cooldown.'],['Convergencia de Zeke / Zeke’s Convergence','Follow-up para tu engage.'],['Medallón de los Solari / Locket','Defensivo de teamfight.'],['Promesa del caballero / Knight’s Vow','Protegés a tu carry.'],['Redención / Redemption','Utilidad global.']]},
+'Master Yi':{kind:'fighter',dmg:'AD',r:{p:'Precisión',k:'Cadencia letal / Lethal Tempo',rows:'Triunfo · Leyenda: Presteza · Último esfuerzo',s:'Dominación',sr:'Impacto repentino · Cazador de tesoros',why:'Yi quiere DPS prolongado, no poke ni runas raras.'},it:[['Espada larga / Doran según jungle item','Inicio estándar.'],['Hoja del rey arruinado / Blade of the Ruined King','DPS y robo de vida.'],['Grebas de berserker','Más autos.'],['Matakrakens / Kraken Slayer','Daño sostenido.'],['Guinsoo / Guinsoo’s Rageblade','On-hit core.'],['Baile de la muerte / Death’s Dance','Sobrevivir reset fights.']]},
+Jinx:{kind:'marksman',dmg:'AD'},Ashe:{kind:'marksman',dmg:'AD'},Jhin:{kind:'marksman',dmg:'AD'},Ezreal:{kind:'marksman',dmg:'Hybrid'},'Kai’Sa':{kind:'marksman',dmg:'Hybrid'},"Kai'Sa":{kind:'marksman',dmg:'Hybrid'},Vayne:{kind:'marksman',dmg:'AD'},Draven:{kind:'marksman',dmg:'AD'},Lux:{kind:'mage',dmg:'AP'},Ahri:{kind:'mage',dmg:'AP'},Zed:{kind:'assassin',dmg:'AD'},Yasuo:{kind:'fighter',dmg:'AD'},Yone:{kind:'fighter',dmg:'Mixed'},Malphite:{kind:'tank',dmg:'Mixed'}};
+const generic={
+marksman:{r:{p:'Precisión',k:'Cadencia letal o Ataque intensificado',rows:'Claridad mental · Leyenda: Linaje · Derribado/Golpe de gracia',s:'Inspiración o Brujería',sr:'Galletas/Calzado o Concentración/Tormenta',why:'ADC estándar: daño constante. No se cambia a Cometa por ser “poke” salvo campeón/build específico.'},it:[['Espada de Doran o Arco de Doran','Inicio según lane.'],['Primer core del campeón','Ej: Hexóptica, Kraken, ER, Collector según campeón.'],['Grebas de berserker','DPS básico.'],['Filo del infinito o item on-hit','Según crítico/on-hit.'],['Lord Dominik o Recordatorio mortal','Penetración / antiheal.'],['Sanguinaria o defensivo','Cierre.']]},
+mage:{r:{p:'Brujería',k:'Cometa arcano o Toque de muerte ígnea',rows:'Banda de maná · Trascendencia · Piroláser',s:'Inspiración',sr:'Calzado · Galletas',why:'Magos de poke usan Cometa; DoT/control prolongado puede usar Toque de muerte ígnea.'},it:[['Anillo de Doran','Inicio.'],['Item de mana/daño del campeón','Luden/Blackfire/RoA según kit.'],['Botas de hechicero','Penetración.'],['Zhonya/Banshee si hay amenaza','Defensa concreta.'],['Rabadon','Daño.'],['Bastón del vacío','MR enemiga.']]},
+assassin:{r:{p:'Dominación',k:'Electrocutar',rows:'Impacto repentino · Globos oculares · Cazador definitivo',s:'Brujería/Precisión',sr:'Daño o sustain',why:'Burst. No usar Irrupción de fase: removida en 26.9.'},it:[['Espada larga','Inicio.'],['Youmuu / Voltaic / core del campeón','Oportunidad fue removido.'],['Botas de lucidez o defensivas','Según riesgo.'],['Edge of Night','Bloquear CC.'],['Serylda / Black Cleaver','Penetración si hay armadura.'],['Defensivo situacional','No regalar shutdown.']]},
+fighter:{r:{p:'Precisión',k:'Conquistador o Cadencia letal',rows:'Triunfo · Leyenda · Último esfuerzo',s:'Valor',sr:'Revestimiento · Inquebrantable',why:'Pelea larga y sustain.'},it:[['Doran / jungle item','Inicio.'],['Core bruiser del campeón','Trinity/Eclipse/Shojin/Stride/BORK.'],['Botas defensivas o Berserker','Según daño enemigo.'],['Sterak / Death’s Dance','Sobrevivir burst.'],['Black Cleaver / penetración','Vs armor.'],['Tank o daño situacional','Según rol en team.']]},
+tank:{r:{p:'Valor',k:'Aftershock o Garras',rows:'Demoler · Condicionamiento · Sobrecrecimiento',s:'Inspiración',sr:'Galletas · Velocidad acercamiento',why:'Aguante, engage y utilidad.'},it:[['Yelmo/Escudo de Doran o support item','Inicio según rol.'],['Botas defensivas','Plated o Mercs.'],['Sunfire / Thornmail / MR','Primera resistencia correcta.'],['Locket/Zeke si support','Utilidad.'],['Randuin/Frozen Heart','Vs crítico/autos.'],['Kaenic/Force of Nature','Vs AP.']]}}
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function icon(n){
+  let ch=C[n];
+  if(ch&&ch.image&&ch.image.full&&DDV)return `https://ddragon.leagueoflegends.com/cdn/${DDV}/img/champion/${ch.image.full}`;
+  return '';
+}
+function champPill(n){
+  if(!n)return '';
+  let src=icon(n);
+  return `<span class="pill">${src?`<img class="avatar" src="${src}" alt="${esc(n)}">`:''}<span>${esc(n)}</span></span>`;
+}
+function champList(title,arr){
+  arr=arr.filter(Boolean);
+  if(!arr.length)return '';
+  return card(title,`<div class="pills">${arr.map(champPill).join('')}</div>`,'blue');
+}
+
+
+function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function aliases(s){
+  let raw=String(s||'').replace(/\([^)]*\)/g,'');
+  return raw.split('/').map(x=>norm(x)).filter(Boolean);
+}
+function itemIcon(name){
+  let parts=aliases(name);
+  for(let p of parts){ if(ITEMS[p]) return ITEMS[p]; }
+  for(let p of parts){
+    let k=Object.keys(ITEMS).find(x=>x===p||x.includes(p)||p.includes(x));
+    if(k) return ITEMS[k];
+  }
+  return '';
+}
+function runeIcon(name){
+  let parts=aliases(name);
+  for(let p of parts){ if(RUNES[p]) return RUNES[p]; if(TREES[p]) return TREES[p]; }
+  for(let p of parts){
+    let k=Object.keys(RUNES).find(x=>x===p||x.includes(p)||p.includes(x));
+    if(k) return RUNES[k];
+    let t=Object.keys(TREES).find(x=>x===p||x.includes(p)||p.includes(x));
+    if(t) return TREES[t];
+  }
+  return '';
+}
+function runeBadge(name){
+  let src=runeIcon(name);
+  return `<span class="runeMini">${src?`<img class="runeIcon" src="${src}" alt="${esc(name)}">`:''}${esc(name)}</span>`;
+}
+function splitRunes(s){return String(s||'').split('·').map(x=>x.trim()).filter(Boolean)}
+
+function prof(n){let p=profiles[n];if(p&&p.r)return p;let ch=C[n],tags=ch?.tags||[],kind=p?.kind||(tags.includes('Marksman')?'marksman':tags.includes('Mage')?'mage':tags.includes('Assassin')?'assassin':tags.includes('Tank')?'tank':tags.includes('Fighter')?'fighter':'fighter');return {...generic[kind],kind,dmg:p?.dmg||guessDmg(kind,ch)}}
+function guessDmg(k,ch){if(!ch)return'Unknown';let a=+ch.info.attack,m=+ch.info.magic;return a>m+2?'AD':m>a+2?'AP':'Mixed'}
+function vals(ids){return ids.map(id=>document.getElementById(id).value.trim()).filter(Boolean)}
+function dmgCount(arr){let c={AD:0,AP:0,Mixed:0,Hybrid:0,Unknown:0};arr.forEach(x=>c[prof(x).dmg in c?prof(x).dmg:'Unknown']++);return c}
+function typeCount(arr){let c={tank:0,assassin:0,mage:0,marksman:0,fighter:0};arr.forEach(x=>c[prof(x).kind]++);return c}
+function card(t,b,cls=''){return`<div class="card ${cls}"><b>${t}</b><br>${b}</div>`}
+function list(it){return`<div class="order">${it.map((x,i)=>{let src=itemIcon(x[0]);return`<div class="item"><div class="num">${i+1}</div>${src?`<img class="itemIcon" src="${src}" alt="${esc(x[0])}">`:`<div class="itemIcon"></div>`}<div><b>${esc(x[0])}</b><small>${esc(x[1])}</small></div></div>`}).join('')}</div>`}
+function runes(p){
+  let r=p.r, key=runeIcon(r.k), tree=runeIcon(r.p), stree=runeIcon(r.s);
+  let primaryRows=splitRunes(r.rows).map(runeBadge).join('');
+  let secondaryRows=splitRunes(r.sr).map(runeBadge).join('');
+  return card('Primaria',`<div class="runeBox">${tree?`<img class="runeIcon" src="${tree}" alt="${esc(r.p)}">`:''}<span class="tag">${esc(r.p)}</span></div><div class="runeBox">${key?`<img class="runeIcon" src="${key}" alt="${esc(r.k)}">`:''}<b>${esc(r.k)}</b></div>${primaryRows}<br><br><div class="runeBox">${stree?`<img class="runeIcon" src="${stree}" alt="${esc(r.s)}">`:''}<span class="tag">${esc(r.s)}</span><b>Secundaria</b></div>${secondaryRows}<br><br>${esc(r.why)}`,'vio')
+}
+function team(me,al){let d=dmgCount([me,...al]),t=typeCount([me,...al]),out=[];let ad=d.AD+d.Mixed*.5+d.Hybrid*.5,ap=d.AP+d.Mixed*.5+d.Hybrid*.5;if(ad>=4)out.push(card('Equipo muy AD','Pueden stackear armadura. Si tu campeón es híbrido, ruta AP/mixta; si no, Lord Dominik/Black Cleaver/Serylda según rol.','warn'));if(ap>=4)out.push(card('Equipo muy AP','Pueden stackear MR. Si sos híbrido, ruta AD/on-hit; si sos AP puro, Void Staff y buscar carries.','warn'));if(t.tank==0)out.push(card('Sin frontline','No facecheckees. En bronce esto pierde partidas. Peleá con visión o esperá que entren ellos.','warn'));if(!out.length)out.push(card('Draft aliado usable','No hay alarma grande. Seguí core del campeón y ajustá por enemigos.','ok'));return out.join('')}
+function adjust(p,en){let t=typeCount(en),a=[];if(t.assassin>=2)a.push(card('Ajuste vs asesinos','No retrases defensivo: Shieldbow/GA/Zhonya/Banshee/Edge según campeón.','warn'));if(t.tank>=2)a.push(card('Ajuste vs tanques','Comprá nombre concreto de penetración: Lord Dominik, Void Staff, Black Cleaver o Serylda según tu campeón.','warn'));if(t.mage>=2)a.push(card('Ajuste vs AP','Mercury Treads, Maw, Banshee, Kaenic o Force of Nature según rol.','blue'));if(!a.length)a.push(card('Matchup normal','Hacé core real de campeón; no inventes runa porque el rival molesta.','ok'));return a.join('')}
+function analyze(){
+ let me=document.getElementById('me').value.trim(),
+     lane=document.getElementById('lane').value.trim(),
+     al=vals(['a1','a2','a3','a4']),
+     en=[lane,...vals(['e1','e2','e3','e4'])].filter(Boolean),
+     out=document.getElementById('out');
+ if(!me){out.className='empty';out.innerHTML='Elegí tu campeón.';return}
+ let p=prof(me), meIcon=icon(me);
+ out.className='result wide';
+ out.innerHTML=`<div class="heroLine">${meIcon?`<img class="avatar" src="${meIcon}" alt="${esc(me)}">`:''}<div><h2 style="margin:0;color:#c89b3c">${esc(me)}</h2><small>${role} · ${p.kind} · daño ${p.dmg}</small></div></div>
+ <div class="sec"><h3>Campeones cargados</h3><div class="cards">${champList('Tu campeón',[me])}${champList('Rival directo',lane?[lane]:[])}${champList('Aliados',al)}${champList('Enemigos',en)}</div></div>
+ <div class="sec"><h3>Runas recomendadas</h3><div class="cards">${runes(p)}</div></div>
+ <div class="sec"><h3>Orden de compra</h3>${list(p.it)}</div>
+ <div class="sec"><h3>Análisis de tu equipo</h3><div class="cards">${team(me,al)}</div></div>
+ <div class="sec"><h3>Ajustes por enemigo</h3><div class="cards">${adjust(p,en)}</div></div>`;
+}
+async function safeJson(url){try{let r=await fetch(url);if(!r.ok)throw new Error(r.status);return await r.json()}catch(e){console.warn('Fetch falló:',url,e);return null}}
+async function load(){
+  const st=document.getElementById('status'), dl=document.getElementById('champions');
+  st.textContent='Cargando datos oficiales de Riot/Data Dragon...';
+  const versions=await safeJson('https://ddragon.leagueoflegends.com/api/versions.json');
+  const v=(versions&&versions[0])||'15.8.1'; DDV=v;
+  const champPack=await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/es_ES/champion.json`) || await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/en_US/champion.json`);
+  if(champPack&&champPack.data){Object.values(champPack.data).forEach(x=>{C[x.name]=x});names=Object.keys(C).sort();dataOK=true}
+  else{names=['Aatrox','Ahri','Akali','Alistar','Amumu','Annie','Aphelios','Ashe','Blitzcrank','Caitlyn','Darius','Draven','Ezreal','Jhin','Jinx','Kai\'Sa','Lee Sin','Leona','Lux','Malphite','Master Yi','Morgana','Thresh','Vayne','Yasuo','Yone','Zed'].sort()}
+  dl.innerHTML=names.map(n=>`<option value="${n}">`).join('');
+  st.textContent=`Campeones listos (${names.length}). Cargando íconos de ítems/runas...`;
+  const itemEs=await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/es_ES/item.json`);
+  const itemEn=await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/en_US/item.json`);
+  function addItems(pack){if(!pack||!pack.data)return;Object.entries(pack.data).forEach(([id,it])=>{if(it.name)ITEMS[norm(it.name)]=`https://ddragon.leagueoflegends.com/cdn/${v}/img/item/${id}.png`})}
+  addItems(itemEs); addItems(itemEn);
+  const runeEs=await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/es_ES/runesReforged.json`);
+  const runeEn=await safeJson(`https://ddragon.leagueoflegends.com/cdn/${v}/data/en_US/runesReforged.json`);
+  function addRunes(pack){if(!pack)return;(pack||[]).forEach(tree=>{TREES[norm(tree.name)]=`https://ddragon.leagueoflegends.com/cdn/img/${tree.icon}`;(tree.slots||[]).forEach(slot=>(slot.runes||[]).forEach(r=>{RUNES[norm(r.name)]=`https://ddragon.leagueoflegends.com/cdn/img/${r.icon}`}))})}
+  addRunes(runeEs); addRunes(runeEn);
+  RUNES[norm('Cadencia letal')]=RUNES[norm('Lethal Tempo')]||RUNES[norm('Tempo letal')]||RUNES[norm('Ataque intensificado')]||RUNES[norm('Press the Attack')];
+  RUNES[norm('Claridad mental')]=RUNES[norm('Presence of Mind')]||RUNES[norm('Claridad mental')];
+  st.textContent=`Listo: campeones ${names.length}, ítems ${Object.keys(ITEMS).length}, runas ${Object.keys(RUNES).length}. Si algún ícono no aparece, la app igual funciona.`;
+}
+load().catch(e=>{console.error(e);document.getElementById('status').textContent='La carga externa falló, pero la app sigue usable con fallback.'});
+</script></body></html>
