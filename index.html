@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LoL Matchup Analyzer V16</title><style>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LoL Matchup Analyzer V17</title><style>
 body{margin:0;background:#010a13;color:#c8aa6e;font-family:system-ui,Segoe UI,sans-serif}.app{max-width:1150px;margin:0 auto;padding:28px 16px}h1{text-align:center;color:#c89b3c}.head,.status{text-align:center;color:#777;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:850px){.grid{grid-template-columns:1fr}}.wide{grid-column:1/-1}.panel,.result{background:#071323;border:1px solid #1e3a5f;border-radius:14px;padding:16px}.title{color:#c89b3c;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.sub{font-size:11px;color:#777;text-transform:uppercase;margin:12px 0 6px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#030b15;border:1px solid #1e3a5f;color:#aaa;border-radius:99px;padding:6px 10px;cursor:pointer}.chip.active{border-color:#c89b3c;color:#f0e6d3}input,select,textarea{width:100%;background:#030b15;border:1px solid #1e3a5f;color:#f0e6d3;border-radius:10px;padding:10px;font:inherit}.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{grid-column:1/-1;border:0;border-radius:12px;background:linear-gradient(135deg,#785a28,#c89b3c,#f0e6d3);color:#010a13;font-weight:900;padding:14px;cursor:pointer}.card{background:#030b15;border:1px solid #1e3a5f;border-radius:12px;padding:12px;line-height:1.45;font-size:13px}.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:760px){.cards{grid-template-columns:1fr}.slots{grid-template-columns:1fr}}b{color:#f0e6d3}.warn{border-color:#d76666;color:#edaaaa}.ok{border-color:#40b878}.vio{border-color:#b48cff}.blue{border-color:#0bc4e3}.sec{margin-top:16px}.sec h3{color:#9b742f;font-size:12px;text-transform:uppercase;letter-spacing:.1em}.order{display:flex;flex-direction:column;gap:7px}.item{display:grid;grid-template-columns:34px 1fr;gap:10px;background:#030b15;border:1px solid #1e3a5f;border-radius:12px;padding:10px}.num{border:1px solid #c89b3c;border-radius:50%;width:32px;height:32px;display:grid;place-items:center;color:#f0e6d3}small{color:#777}.tag{display:inline-block;border:1px solid #c89b3c66;border-radius:99px;padding:2px 7px;font-size:10px;margin:0 5px 5px 0;color:#c89b3c}.empty{grid-column:1/-1;border:1px dashed #1e3a5f;border-radius:14px;padding:32px;text-align:center;color:#777}
 .avatar{width:34px;height:34px;border-radius:50%;border:2px solid #c89b3c;object-fit:cover;background:#030b15;vertical-align:middle}
 .heroLine{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -290,7 +290,17 @@ kbd{
 .spellCard[data-tip]:hover:before{content:"";position:absolute;left:22px;bottom:100%;border:8px solid transparent;border-top-color:#c89b3c;z-index:131}
 @media(max-width:560px){.spellPair{grid-template-columns:1fr}}
 
-</style></head><body><div class="app"><h1>LoL Matchup Analyzer</h1><div class="head">V16 · Jungle role fixed · Campeones oficiales · Runas, ítems y análisis por matchup</div><div id="status" class="status">Cargando campeones oficiales...</div><div class="inputHint">Tip: escribí parte del campeón y usá <kbd>Tab</kbd> o <kbd>Enter</kbd> para autocompletar. Si ya está completo, <kbd>Tab</kbd> pasa al siguiente campo.</div><div class="grid"><section class="panel"><div class="title">Tu campeón</div><div id="roles" class="chips"></div><div class="sub">Campeón</div><input id="me" list="champions" placeholder="Ej: Caitlyn, Thresh, Master Yi"><div class="sub">Plan</div><select id="style"><option value="auto">Auto / recomendado</option><option value="safe">Safe lane / escalar</option><option value="poke">Poke</option><option value="burst">Burst / all-in</option><option value="dps">DPS prolongado</option><option value="roam">Roam</option></select></section><section class="panel"><div class="title">Enemigos</div><div class="sub">Rival directo</div><input id="lane" list="champions"><div class="sub">Resto</div><div class="slots"><input id="e1" list="champions"><input id="e2" list="champions"><input id="e3" list="champions"><input id="e4" list="champions"></div></section><section class="panel wide"><div class="title">Aliados</div><div class="slots"><input id="a1" list="champions"><input id="a2" list="champions"><input id="a3" list="champions"><input id="a4" list="champions"></div></section><button class="btn" onclick="analyze()">Analizar</button><div id="out" class="empty">Cargá campeones y analizá. Si Caitlyn sale con Cometa, rompí algo.</div></div><datalist id="champions"></datalist></div><script>
+
+/* ===== V17 meta source + context engine ===== */
+.sourceGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sourceLink{display:block;text-decoration:none;color:#f0e6d3;background:#030b15;border:1px solid #1e3a5f;border-radius:12px;padding:12px;text-align:center}
+.sourceLink:hover{border-color:#c89b3c;box-shadow:0 0 0 2px #c89b3c22}
+.sourceLink b{color:#c89b3c;display:block;margin-bottom:4px}
+.contextBadge{display:inline-block;border:1px solid #c89b3c66;background:#c89b3c16;color:#f0e6d3;border-radius:999px;padding:3px 8px;font-size:11px;margin:3px 4px 3px 0}
+.planHeader{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px}
+@media(max-width:760px){.sourceGrid{grid-template-columns:1fr}}
+
+</style></head><body><div class="app"><h1>LoL Matchup Analyzer</h1><div class="head">V17 · Meta source + context · Campeones oficiales · Runas, ítems y análisis por matchup</div><div id="status" class="status">Cargando campeones oficiales...</div><div class="inputHint">Tip: escribí parte del campeón y usá <kbd>Tab</kbd> o <kbd>Enter</kbd> para autocompletar. Si ya está completo, <kbd>Tab</kbd> pasa al siguiente campo.</div><div class="grid"><section class="panel"><div class="title">Tu campeón</div><div id="roles" class="chips"></div><div class="sub">Campeón</div><input id="me" list="champions" placeholder="Ej: Caitlyn, Thresh, Master Yi"><div class="sub">Plan</div><select id="style"><option value="auto">Auto / recomendado</option><option value="safe">Safe lane / escalar</option><option value="poke">Poke</option><option value="burst">Burst / all-in</option><option value="dps">DPS prolongado</option><option value="roam">Roam</option></select></section><section class="panel"><div class="title">Enemigos</div><div class="sub">Rival directo</div><input id="lane" list="champions"><div class="sub">Resto</div><div class="slots"><input id="e1" list="champions"><input id="e2" list="champions"><input id="e3" list="champions"><input id="e4" list="champions"></div></section><section class="panel wide"><div class="title">Aliados</div><div class="slots"><input id="a1" list="champions"><input id="a2" list="champions"><input id="a3" list="champions"><input id="a4" list="champions"></div></section><button class="btn" onclick="analyze()">Analizar</button><div id="out" class="empty">Cargá campeones y analizá. Si Caitlyn sale con Cometa, rompí algo.</div></div><datalist id="champions"></datalist></div><script>
 let role='Bot',C={},names=[],dataOK=false,DDV='',ITEMS={},ITEM_DESC={},RUNES={},TREES={},RUNE_DESC={},TREE_DESC={},SPELLS={},SPELL_DESC={};
 function setRole(r,btn){
   role=r;
@@ -514,16 +524,86 @@ function dedupeItems(items,p){
   return out.slice(0,6);
 }
 
+
+function slugBasic(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'');
+}
+function slugDash(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' ').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,'-');
+}
+function roleSlug(){
+  const r=currentRole().toLowerCase();
+  if(r==='bot')return 'adc';
+  if(r==='jungle')return 'jungle';
+  if(r==='support')return 'support';
+  return r;
+}
+function metaLinks(me){
+  const rb=roleSlug(), basic=slugBasic(me), dash=slugDash(me);
+  return `<div class="sourceGrid">
+    <a class="sourceLink" target="_blank" href="https://u.gg/lol/champions/${basic}/build/${rb}"><b>U.GG</b><span>Build meta por rol</span></a>
+    <a class="sourceLink" target="_blank" href="https://lolalytics.com/lol/${basic}/build/?lane=${rb}"><b>Lolalytics</b><span>Winrate, pickrate y variantes</span></a>
+    <a class="sourceLink" target="_blank" href="https://mobalytics.gg/lol/champions/${dash}/build/${rb}"><b>Mobalytics</b><span>Build/runes externas</span></a>
+  </div>`;
+}
+function contextFlags(me,lane,en,al){
+  const p=prof(me), ed=dmgCount(unique(en)), et=typeCount(unique(en)), ad=dmgCount([me,...al]), tt=typeCount([me,...al]), flags=[];
+  if(et.tank>=2)flags.push('frontline enemiga');
+  if(et.assassin>=2)flags.push('burst/asesinos');
+  if(ed.AP>=2)flags.push('mucho AP');
+  if(ed.AD>=3)flags.push('mucho AD');
+  if(tt.tank===0)flags.push('tu equipo sin frontline');
+  if((ad.AD+ad.Hybrid*.5+ad.Mixed*.5)>=4)flags.push('tu equipo muy AD');
+  if((ad.AP+ad.Hybrid*.5+ad.Mixed*.5)>=4)flags.push('tu equipo muy AP');
+  if(isJungle())flags.push('rol jungle manda');
+  if(!flags.length)flags.push('meta usable');
+  return flags;
+}
+function sourceDecision(me,lane,en,al){
+  const flags=contextFlags(me,lane,en,al), p=prof(me);
+  let decision='Usar build meta como base';
+  let cls='ok';
+  if(flags.includes('frontline enemiga')||flags.includes('burst/asesinos')||flags.includes('mucho AP')||flags.includes('tu equipo sin frontline')){
+    decision='Plan contextual recomendado';
+    cls='warn';
+  }
+  const txt=`<div class="planHeader">${flags.map(f=>`<span class="contextBadge">${esc(f)}</span>`).join('')}</div>
+  <b>${decision}</b><br>
+  La fuente externa sirve como build meta. La app solo se desvía si la composición vuelve mala esa build: tanques, CC, burst, daño AP/AD acumulado o falta de frontline.`;
+  return card('Meta vs partida actual',txt,cls);
+}
+function noGeneric(items,p){
+  const concrete={
+    marksman:[['Espada de Doran','Inicio seguro.'],['Hexóptica C44','Primer core recomendado como ADC crítico genérico.'],['Grebas de berserker','DPS básico.'],['Filo del infinito','Daño crítico.'],['Recuerdos de Lord Dominik','Penetración vs armadura.'],['Escudo inmortal','Defensivo contra burst.']],
+    fighter:[['Escudo de Doran','Inicio seguro.'],['Cuchilla negra','Bruiser estable: vida, daño y shred.'],['Botas de mercurio','Tenacidad/MR como opción defensiva general.'],['Sterak','Escudo contra burst.'],['Baile de la muerte','Sobrevivir peleas físicas.'],['Rostro espiritual','MR si hay AP.']],
+    tank:[['Escudo de Doran','Inicio seguro.'],['Botas de mercurio','Tenacidad/MR general.'],['Kaenic Rookern','MR fuerte contra AP.'],['Corazón de hielo','Vs autos/AD.'],['Presagio de Randuin','Vs crítico.'],['Fuerza de la naturaleza','Vs AP sostenido.']],
+    mage:[['Anillo de Doran','Inicio seguro.'],['Antorcha de fuego negro','Daño/clear AP genérico.'],['Botas de hechicero','Penetración mágica.'],['Reloj de arena de Zhonya','Defensivo contra engage.'],['Sombrero mortal de Rabadon','Daño alto.'],['Bastón del vacío','Penetración vs MR.']],
+    assassin:[['Espada larga','Inicio de daño.'],['Eclipse','Burst + escudo como plan seguro.'],['Botas jonias de lucidez','Cooldowns.'],['Filo de la noche','Bloquear CC clave.'],['Rencor de Serylda','Penetración y slow.'],['Ángel guardián','No regalar shutdown.']],
+    support:[['Atlas mundial','Item de support.'],['Botas de movilidad','Roam.'],['Convergencia de Zeke','Follow-up de engage.'],['Medallón de los Solari','Defensivo de teamfight.'],['Promesa del caballero','Proteger carry.'],['Redención','Utilidad.']]
+  };
+  return items.map((it,i)=>{
+    const bad=/seg[uú]n|objeto core|objeto de daño|situacional|core del campeón/i.test(it[0]+' '+it[1]);
+    if(!bad)return it;
+    const pool=concrete[p.kind]||concrete.fighter;
+    return pool[i]||it;
+  });
+}
+
 function jungleItems(me,en){
  let p=prof(me), enemyD=dmgCount(unique(en)), enemyT=typeCount(unique(en));
  let base;
- if(me==='Lee Sin')base=[['Caminabrisas','Item de jungla obligatorio: movilidad para gankear y entrar/salir.'],['Eclipse','Primer core de Lee Sin jungle: daño, escudo y duelos.'],['Botas blindadas','Defensivas por defecto; Mercurio si el CC/AP te corta los engages.'],['Cuchilla negra','Vida, daño y reducción de armadura para peleas extendidas.'],['Baile de la muerte','Sobrevivir daño físico y resets de pelea.'],['Fauces de Malmortius','MR defensiva si Lux/AP te explotan.']];
+ if(me==='Lee Sin')base=[['Caminabrisas','Item de jungla obligatorio: movilidad para gankear y entrar/salir.'],['Eclipse','Primer core de Lee Sin jungle: daño, escudo y duelos.'],['Botas blindadas','Defensivas por defecto. Mercurio si el CC/AP te corta los engages.'],['Cuchilla negra','Vida, daño y reducción de armadura para peleas extendidas.'],['Baile de la muerte','Sobrevivir daño físico y resets de pelea.'],['Fauces de Malmortius','MR defensiva si Lux/AP te explotan.']];
  else if(me==='Viego')base=[['Caminabrisas','Item de jungla obligatorio: no Doran. Movilidad para gankear y resetear peleas.'],['Matakrakens','Primer core de Viego jungle para DPS y resets.'],['Botas blindadas','Defensivas por defecto. Mercurio si hay mucho CC/AP.'],['El Coleccionista','Snowball y execute después del primer core.'],['Escudo inmortal','Sobrevivir burst para resetear peleas.'],['Recuerdos de Lord Dominik','Penetración vs frontline/armadura.']];
+ else if(me==='Master Yi')base=[['Caminabrisas','Item de jungla obligatorio.'],['Hoja del rey arruinado','Duelos y daño contra vida.'],['Grebas de berserker','Velocidad de ataque para DPS.'],['Guinsoo','Potencia on-hit y DPS sostenido.'],['Final del ingenio','MR y daño on-hit si hay AP/CC.'],['Ángel guardián','No regalar shutdown al entrar.']];
+ else if(me==='Jarvan IV')base=[['Garra de Ascuas','Item de jungla para duelos y frontline.'],['Eclipse','Daño + escudo para gank y burst inicial.'],['Botas blindadas','Defensa básica.'],['Cuchilla negra','Shred para tu equipo y vida.'],['Sterak','Escudo para entrar con R.'],['Baile de la muerte','Aguantar peleas extendidas.']];
+ else if(me==='Kayn')base=[['Caminabrisas','Item de jungla obligatorio para movilidad.'],['Eclipse','Core flexible antes de forma.'],['Botas jonias de lucidez','Cooldowns para limpiar/gankear.'],['Cuchilla negra','Plan bruiser si hay frontline.'],['Baile de la muerte','Sobrevivir peleas físicas.'],['Fauces de Malmortius','Si hay AP/CC que te explota.']];
+ else if(me==="Kha\'Zix"||me==="Rengar")base=[['Caminabrisas','Item de jungla obligatorio para movilidad.'],['Eclipse','Burst + escudo; más seguro que letalidad pura.'],['Botas jonias de lucidez','Cooldowns para picks.'],['Filo de la noche','Bloquear CC antes de entrar.'],['Rencor de Serylda','Penetración y slow.'],['Ángel guardián','Evita perder shutdown.']];
  else if(p.kind==='tank')base=[['Garra de Ascuas','Item de jungla para tanque/duelos prolongados.'],['Botas defensivas','Mercurio vs CC/AP; Plated vs autos/AD.'],['Égida de fuego solar','Clear y daño sostenido de tanque.'],['Kaenic Rookern','MR si hay AP pesado.'],['Corazón de hielo','Vs ADC/autos.'],['Presagio de Randuin','Vs crítico.']];
- else if(p.kind==='mage')base=[['Caminabrisas','Item de jungla obligatorio: movilidad general para gankear.'],['Objeto AP core del campeón','Primer item de daño/clear.'],['Botas de hechicero','Penetración mágica.'],['Reloj de arena de Zhonya','Defensivo contra engage.'],['Sombrero mortal de Rabadon','Daño AP.'],['Bastón del vacío','Penetración si compran MR.']];
- else base=[['Caminabrisas','Item de jungla obligatorio: jamás Doran en jungla.'],['Objeto core de jungla del campeón','Primer daño/clear.'],['Botas defensivas','Mercurio vs CC/AP; Plated vs AD/autos.'],['Objeto de daño o bruiser','Según campeón.'],['Defensivo si sos frontline','Sterak/GA/MR según amenaza.'],['Penetración o situacional','Según resistencias enemigas.']];
+ else if(p.kind==='mage')base=[['Caminabrisas','Item de jungla obligatorio: movilidad general para gankear.'],['Antorcha de fuego negro','Daño AP y clear como plan base.'],['Botas de hechicero','Penetración mágica.'],['Reloj de arena de Zhonya','Defensivo contra engage.'],['Sombrero mortal de Rabadon','Daño AP alto.'],['Bastón del vacío','Penetración si compran MR.']];
+ else base=[['Caminabrisas','Item de jungla obligatorio: jamás Doran en jungla.'],['Eclipse','Core seguro para jungla AD/bruiser genérico.'],['Botas blindadas','Defensa básica; Mercurio si hay CC/AP.'],['Cuchilla negra','Vida, daño y utilidad contra armadura.'],['Sterak','Escudo para no explotar al entrar.'],['Baile de la muerte','Sobrevivir peleas físicas.']];
  if(enemyD.AP>=2)base[2]=['Botas de mercurio','Hay bastante AP/CC: Mercurio antes que botas de daño.'];
- return dedupeItems(base,p);
+ if(enemyT.tank>=2 && p.kind!=='tank')base[3]=['Cuchilla negra','Frontline enemiga: necesitás shred/peleas más largas.'];
+ return dedupeItems(noGeneric(base,p),p);
 }
 function adaptedItems(me,lane,en){
  let p=prof(me);
@@ -536,7 +616,7 @@ function adaptedItems(me,lane,en){
  if((p.kind==='fighter'||p.kind==='tank')&&ld==='AP'){items[1]=['Botas de mercurio','Rival directo AP/CC: Mercurio antes que armadura.']}
  if(p.kind==='fighter'&&enemyD.AP>=2){items[4]=['Rostro espiritual','Hay AP suficiente para meter MR antes del sexto item.']}
  if(p.kind==='tank'&&enemyD.AP>=2){items[2]=['Kaenic Rookern','AP pesado: primera resistencia grande debe ser MR.']}
- return dedupeItems(items,p)}
+ return dedupeItems(noGeneric(items,p),p)}
 function analyze(){
  let me=document.getElementById('me').value.trim(),
      lane=document.getElementById('lane').value.trim(),
@@ -548,6 +628,7 @@ function analyze(){
  out.className='result wide';
  out.innerHTML=`<div class="heroLine">${meIcon?`<img class="avatar" src="${meIcon}" alt="${esc(me)}">`:''}<div><h2 style="margin:0;color:#c89b3c">${esc(me)}</h2><small>${currentRole()} · ${isJungle()?'jungler':p.kind} · daño ${p.dmg}</small></div></div>
  <div class="sec"><h3>Campeones cargados</h3><div class="cards">${champList('Tu campeón',[me])}${champList('Rival directo',lane?[lane]:[])}${champList('Aliados',al)}${champList('Enemigos',en)}</div></div>
+ <div class="sec"><h3>Fuente meta externa</h3>${metaLinks(me)}<div class="cards" style="margin-top:10px">${sourceDecision(me,lane,en,al)}</div></div>
  <div class="sec"><h3>Hechizos de invocador</h3>${summonerSpells(p)}</div><div class="sec"><h3>Runas recomendadas</h3><div class="cards">${runes(p)}</div></div>
  <div class="sec"><h3>Orden de compra</h3>${list(adaptedItems(me,lane,en))}</div>
  <div class="sec"><h3>Análisis de tu equipo</h3><div class="cards">${team(me,al)}</div></div>
